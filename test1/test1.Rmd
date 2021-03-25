@@ -1,75 +1,217 @@
 ---
-title: "Tutorial"
+title: "Week 8: Repeated Measures ANOVA"
 output: learnr::tutorial
-runtime: shiny_prerendered
+runtime: shiny
 ---
 
 ```{r setup, include=FALSE}
 library(learnr)
 knitr::opts_chunk$set(echo = FALSE)
+gradethis::gradethis_setup()
+library(datarium)
+library(tidyverse)
+library(ez)
+library(psyntur)
+df <- selfesteem %>%
+  gather(key = "time", value = "score", t1, t2, t3)
+df <- df %>% 
+  mutate_at(vars(id, time), as.factor)
+df2 <- selfesteem2 %>%
+  gather(key = "time", value = "score", t1, t2, t3)
+df2 <- df2 %>% 
+  mutate_at(vars(id, treatment, time), as.factor)
+df2b <- df2 %>% 
+mutate(df2, IV = interaction(time, treatment))
 ```
 
+## Introduction
 
-## Topic 1
+This is a self-assessment on repeated measures ANOVA, whether one-way or factorial ANOVA. Before you attempt this, you should first watch all the video lectures for Week 8, and also do the in-class workshop in Week 8.
 
-### Exercise 
+This problem set will use the [selfeesteem](https://rdrr.io/cran/datarium/man/selfesteem.html) and the [selfeesteem2](https://rdrr.io/cran/datarium/man/selfesteem2.html) data sets, which we have used in the workshop.
 
-*Here's a simple exercise with an empty code chunk provided for entering the answer.*
 
-Write the R code required to add two plus two:
+## Explore data and test for assumptions
 
-```{r two-plus-two, exercise=TRUE}
+Let's start with one-way repeated measures ANOVA. Assume you were to test a null hypothesis of no difference between mean self-esteem scores, across three time points, as effect of a new type of diet.
+
+Data (```df```) has already been loaded, in long format. Take a minute to explore it.
+
+```{r explore, exercise=TRUE}
+head(df)
+```
+
+Now test whether self-esteem scores within each time point are normally distributed, by using the Shapiro-Wilk test. Please run the ```shapiro_test``` function from the ```psyntur``` package on the ```df``` data frame. Packages are already loaded.
+
+```{r norm, exercise=TRUE, exercise.eval=TRUE}
 
 ```
 
-### Exercise with Code
-
-*Here's an exercise with some prepopulated code as well as `exercise.lines = 5` to provide a bit more initial room to work.*
-
-Now write a function that adds any two numbers and then call it:
-
-```{r add-function, exercise=TRUE, exercise.lines = 5}
-add <- function() {
-  
-}
+```{r norm-hint}
+shapiro_test(score, by = time, data = df)
 ```
 
-## Topic 2
-
-### Exercise with Hint
-
-*Here's an exercise where the chunk is pre-evaulated via the `exercise.eval` option (so the user can see the default output we'd like them to customize). We also add a "hint" to the correct solution via the chunk immediate below labeled `print-limit-hint`.*
-
-Modify the following code to limit the number of rows printed to 5:
-
-```{r print-limit, exercise=TRUE, exercise.eval=TRUE}
-mtcars
+```{r norm-solution}
+shapiro_test(score, by = time, data = df)
+```
+ 
+```{r norm-code-check}
+grade_code()
 ```
 
-```{r print-limit-hint}
-head(mtcars)
-```
-
-### Quiz
-
-*You can include any number of single or multiple choice questions as a quiz. Use the `question` function to define a question and the `quiz` function for grouping multiple questions together.*
-
-Some questions to verify that you understand the purposes of various base and recommended R packages:
-
-```{r quiz}
+```{r quiz0}
 quiz(
-  question("Which package contains functions for installing other R packages?",
-    answer("base"),
-    answer("tools"),
-    answer("utils", correct = TRUE),
-    answer("codetools")
-  ),
-  question("Which of the R packages listed below are used to create plots?",
-    answer("lattice", correct = TRUE),
-    answer("tools"),
-    answer("stats"),
-    answer("grid", correct = TRUE)
+  question("Based on the results from the Shapiro-Wilk test, which of the following is true?",
+    answer("Data from t1 and t2 are normally distributed"),
+    answer("Data from t2 and t3 are normally distributed"),
+    answer("Data from t1 and t3 are normally distributed"),
+    answer("Data from t1, t2 and t3 are normally distributed", correct = TRUE)
   )
 )
 ```
 
+
+## One-way repeated measures ANOVA
+
+Now run a one-way ANOVA on the newly created ```df``` data and the ```ezANOVA``` function. Feel free to explore the data again, if you need. Packages are already loaded.
+
+```{r one-way_anova, exercise=TRUE, exercise.eval=TRUE}
+
+```
+
+```{r one-way_anova-hint}
+ezANOVA(data = df, dv = score, wid = id, within = time)
+```
+
+```{r one-way_anova-solution}
+ezANOVA(data = df, dv = score, wid = id, within = time)
+```
+ 
+```{r one-way_anova-code-check}
+grade_code()
+```
+
+
+### Quiz
+
+Please now answer the following questions:
+
+```{r quiz1}
+quiz(
+  question("Based on the results from the sphericity test, which of the following outputs would be best to interpret?",
+    answer("Greenhouse-Geisser correction"),
+    answer("Huynd-Feldt correction"),
+    answer("Non-corrected solution", correct = TRUE)
+  ),
+  question("How would you interpret the main effect of diet on self-esteem?",
+    answer("Non-significant"),
+    answer("Significant at p < 0.001", correct = TRUE),
+    answer("Significant at p < 0.01"),
+    answer("Significant at p < 0.05")
+  )
+)
+```
+
+
+## Factorial repeated measures ANOVA
+
+Let's now move on and run a factorial repeated measures ANOVA to test a null hypothesis of no difference between mean self-esteem scores, between two consecutive trials (diet, control) and three time points (t1, t2, t3).
+
+Data was loaded in long format, take a minute to explore it. Packages are already loaded.
+
+```{r explore2, exercise=TRUE}
+head(df2)
+```
+
+Now plot self-esteem scores by ```treatment``` and ```time```, the data using the ```tukeyboxplot``` function from the ```psyntur``` package. Remember to use the ```df2``` data frame. 
+
+```{r explore2x, exercise=TRUE, exercise.eval=TRUE}
+
+```
+
+```{r explore2x-hint}
+tukeyboxplot(data = df2, y = score, x = time, by = treatment)
+```
+
+```{r explore2x-solution}
+tukeyboxplot(data = df2, y = score, x = time, by = treatment)
+```
+ 
+```{r explore2x-code-check}
+grade_code()
+```
+
+```{r quiz2}
+quiz(
+  question("Which of the following is correct?",
+    answer("The lowest median self-esteem score was observed in the treatment group, t1"),
+    answer("The lowest median self-esteem score was observed in the control group, t1"),
+    answer("The lowest median self-esteem score was observed in the treatment group, t3"),
+    answer("The lowest median self-esteem score was observed in the control group, t3", correct = TRUE)
+  )
+)
+```
+
+
+## Testing the factorial ANOVA model
+
+Now let's run two-way ANOVA on the newly created ```df2``` data frame, using the ```ezANOVA``` function.
+
+```{r two-way_anova, exercise=TRUE, exercise.eval=TRUE}
+
+```
+
+```{r two-way_anova-hint}
+ezANOVA(data = df2, dv = score, wid = id, within = c(time, treatment))
+```
+
+```{r two-way_anova-solution}
+ezANOVA(data = df2, dv = score, wid = id, within = c(time, treatment))
+```
+ 
+```{r two-way_anova-code-check}
+grade_code()
+```
+
+
+### Quiz
+
+Please now answer the following questions:
+
+```{r quiz3}
+quiz(
+  question("Based on the results from the sphericity test, which of the following outputs would be most appropriate to use, to interpret the interaction?",
+    answer("Greenhouse-Geisser correction"),
+    answer("Huynd-Feldt correction"),
+    answer("Non-corrected solution", correct = TRUE)
+  ),
+  question("How would you interpret the interaction of time and treatment on self-esteem?",
+    answer("Non-significant"),
+    answer("Significant at p < 0.001", correct = TRUE),
+    answer("Significant at p < 0.01"),
+    answer("Significant at p < 0.05")
+  )
+)
+```
+
+Now you can test for pairwise comparisons across the levels of the IVs Complete the code below by using the ```pairwise.t.test``` function on the ```df2b``` data frame. This is equivalent to the same data used to run the model, but with the addition of a new variable named ```IV```, combining all the levels of the independent variables. Please remember to correct for the family-wise error rate. 
+
+```{r explore4, exercise=TRUE}
+head(df2b)
+```
+
+```{r two-way_t_anova, exercise=TRUE, exercise.eval=TRUE}
+
+```
+
+```{r two-way_t_anova-hint}
+pairwise.t.test(df2b$score, df2b$IV, paired = TRUE, p.adjust.method = "bonferroni")
+```
+
+```{r two-way_t_anova-solution}
+pairwise.t.test(df2b$score, df2b$IV, paired = TRUE, p.adjust.method = "bonferroni")
+```
+ 
+```{r two-way_t_anova-code-check}
+grade_code()
+```
